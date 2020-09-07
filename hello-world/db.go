@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -13,8 +11,7 @@ import (
 
 var db *dynamodb.DynamoDB
 
-//const IssuesTable = "huManUnited-IssuesTable-HCOFLC4PHPHQ"
-var IssuesTable = os.Getenv("ISSUESTABLE")
+const testTable = "TestTable"
 
 func createDBConnection(env string, endpoint string) {
 	if env == "AWS_SAM_LOCAL" {
@@ -31,9 +28,9 @@ func createDBConnection(env string, endpoint string) {
 	}
 }
 
-func getItems() ([]*Issue, error) {
+func getItems() ([]*Test, error) {
 	input := &dynamodb.ScanInput{
-		TableName: aws.String(IssuesTable),
+		TableName: aws.String("TestTable"),
 	}
 
 	result, err := db.Scan(input)
@@ -44,9 +41,9 @@ func getItems() ([]*Issue, error) {
 		return nil, nil
 	}
 	fmt.Println(result)
-	issues := make([]*Issue, 0)
+	issues := make([]*Test, 0)
 	for _, i := range result.Items {
-		issue := new(Issue)
+		issue := new(Test)
 		fmt.Println(i)
 		err = dynamodbattribute.UnmarshalMap(i, &issue)
 
@@ -59,33 +56,15 @@ func getItems() ([]*Issue, error) {
 	return issues, nil
 }
 
-func putItem(issue *Issue) error {
+func putItem(issue *Test) error {
 	input := &dynamodb.PutItemInput{
-		TableName: aws.String(IssuesTable),
+		TableName: aws.String("TestTable"),
 		Item: map[string]*dynamodb.AttributeValue{
 			"Id": {
 				S: aws.String(issue.ID),
 			},
-			"Title": {
-				S: aws.String(issue.Title),
-			},
-			"Created": {
-				S: aws.String(issue.Created),
-			},
-			"Body": {
-				S: aws.String(issue.Body),
-			},
-			"Private": {
-				N: aws.String(strconv.Itoa(issue.Private)),
-			},
-			"Location": {
-				S: aws.String(issue.Location),
-			},
-			"User": {
-				S: aws.String(issue.User),
-			},
-			"Personal": {
-				N: aws.String(strconv.Itoa(issue.Personal)),
+			"Text": {
+				S: aws.String(issue.Text),
 			},
 		},
 	}

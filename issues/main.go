@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
-
-	"github.com/google/uuid"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/google/uuid"
 )
 
 type Issue struct {
@@ -31,27 +31,30 @@ func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, 
 		return insert(req)
 	default:
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusMethodNotAllowed,
-			Body: http.StatusText(http.StatusMethodNotAllowed)}, nil
+			Headers: headers,
+			Body:    http.StatusText(http.StatusMethodNotAllowed)}, nil
 	}
 }
 
 func fetch(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	issues, err := getItems()
+	headers := map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
+		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
 	if err != nil {
 		//See if we can pass err instead
 
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,
-			Body: err.Error()}, nil
+			Headers: headers,
+			Body:    err.Error()}, nil
 	}
 	fmt.Println(issues)
 	issues_json, err := json.Marshal(issues)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusInternalServerError,
+			Headers:    headers,
 			Body:       http.StatusText(http.StatusInternalServerError)}, nil
 	}
-	headers := map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
-		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
 	return events.APIGatewayProxyResponse{
 		Body:       string(issues_json),
 		Headers:    headers,
@@ -70,9 +73,14 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 	// 	User:     "Viggy",
 	// 	Location: "Bangalore",
 	// }
+
+	headers := map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
+		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
+
 	if request.Headers["content-type"] != "application/json" && request.Headers["Content-Type"] != "application/json" {
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusNotAcceptable,
-			Body: http.StatusText(http.StatusNotAcceptable)}, nil
+			Headers: headers,
+			Body:    http.StatusText(http.StatusNotAcceptable)}, nil
 	}
 	issue := new(Issue)
 	issue.Personal = 1
@@ -82,7 +90,8 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 	issue.Created = time.Now().Local().String()
 	if err != nil {
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest,
-			Body: http.StatusText(http.StatusBadRequest)}, nil
+			Headers: headers,
+			Body:    http.StatusText(http.StatusBadRequest)}, nil
 	}
 	fmt.Println(issue)
 	err = putItem(issue)
@@ -90,10 +99,9 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 		//See if we can pass err instead
 
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,
-			Body: err.Error()}, nil
+			Headers: headers,
+			Body:    err.Error()}, nil
 	}
-	headers := map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
-		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
 
 	return events.APIGatewayProxyResponse{
 		Body:       fmt.Sprintf("Successfully stored the entry"),
@@ -103,5 +111,9 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 }
 
 func main() {
+	//get parameters here from environment
+	env := os.Getenv("AWSENV")
+	dbEndpoint := os.Getenv("DBENDPOINT")
+	createDBConnection(env, dbEndpoint)
 	lambda.Start(router)
 }

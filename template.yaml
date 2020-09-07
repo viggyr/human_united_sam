@@ -5,10 +5,40 @@ Description: >
   
   Sample SAM Template for huManUnited
 
+Parameters:
+  AWSENVNAME:
+    Type: String
+    AllowedValues:
+      - AWS_SAM_LOCAL
+      - AWS
+    Default: AWS_SAM_LOCAL
+  DBSERVER:
+    Type: String
+    Default: 'http://localhost:8000'
+  USERTABLE:
+    Type: String
+    AllowedValues:
+      - UsersTable
+      - huManUnited-UsersTable-16HJ59LOVEINZ
+    Default:  'UsersTable'
+  ISSUETABLE:
+    Type: String
+    AllowedValues:
+      - IssuesTable
+      - huManUnited-IssuesTable-HCOFLC4PHPHQ
+    Default: IssuesTable
+  
+  
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 5
+    Environment:
+      Variables:
+        AWSENV: !Ref AWSENVNAME
+        DBENDPOINT: !Ref DBSERVER
+        USERSTABLE: !Ref USERTABLE
+        ISSUESTABLE: !Ref ISSUETABLE
 
 Resources:
   HelloWorldFunction:
@@ -23,7 +53,8 @@ Resources:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /hello
-            Method: GET
+            Method: ANY
+        
   IssuesFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -37,6 +68,8 @@ Resources:
           Properties:
             Path: /issues
             Method: ANY
+
+
   UsersFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -74,7 +107,7 @@ Resources:
       ProvisionedThroughput: 
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-  
+
       
 
 Outputs:

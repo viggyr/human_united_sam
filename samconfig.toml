@@ -6,7 +6,8 @@ stack_name = "huManUnited"
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-17gwnfz8dzd94"
 s3_prefix = "huManUnited"
 region = "ap-south-1"
-profile = "vignesh"
+profile = "default"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
+parameter_overrides = "AWSENVNAME=\"AWS\" DBSERVER=\"http://localhost:8000\" USERTABLE=\"huManUnited-UsersTable-16HJ59LOVEINZ\" ISSUETABLE=\"huManUnited-IssuesTable-HCOFLC4PHPHQ\""
 
