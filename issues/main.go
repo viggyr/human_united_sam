@@ -24,6 +24,8 @@ type Issue struct {
 }
 
 func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	headers := map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
+		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
 	switch req.HTTPMethod {
 	case "GET":
 		return fetch(req)
@@ -37,9 +39,9 @@ func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, 
 }
 
 func fetch(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	issues, err := getItems()
 	headers := map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
 		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
+	issues, err := getItems()
 	if err != nil {
 		//See if we can pass err instead
 
@@ -73,10 +75,8 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 	// 	User:     "Viggy",
 	// 	Location: "Bangalore",
 	// }
-
 	headers := map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
 		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
-
 	if request.Headers["content-type"] != "application/json" && request.Headers["Content-Type"] != "application/json" {
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusNotAcceptable,
 			Headers: headers,
