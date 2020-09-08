@@ -84,15 +84,15 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 			Headers:    getHeaders(),
 			Body:       err.Error()}, nil
 	}
-	if existingUser == nil {
+	if !existingUser {
 		user.ID = uuid.New().String()
 		user.JoinedDate = currTime
 		user.LastLogin = currTime
-		user.SamaritanPoints = 10 // default samaratian points - 10
+		// default samaratian points - 10
+		user.SamaritanPoints = 10
 		err = putUser(user)
 	} else {
-		existingUser.LastLogin = currTime
-		err = putUser(existingUser)
+		err = updateUserLastLogin(currTime, user.Email)
 	}
 
 	if err != nil {
