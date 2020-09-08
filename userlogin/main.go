@@ -76,25 +76,25 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 	}
 	user := new(User)
 	err := json.Unmarshal([]byte(request.Body), user)
-
-	user.ID = uuid.New().String()
 	currTime := time.Now().Local().String()
-	exists, err := checkIfUserExists(user.Email)
+	existingUser, err := checkIfUserExists(user.Email)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Headers:    getHeaders(),
 			Body:       err.Error()}, nil
 	}
-	if !exists {
+	if existingUser == nil {
+		user.ID = uuid.New().String()
 		user.JoinedDate = currTime
 		user.LastLogin = currTime
 		user.SamaritanPoints = 10 // default samaratian points - 10
+		err = putUser(user)
 	} else {
-		user.LastLogin = currTime
+		existingUser.LastLogin = currTime
+		err = putUser(existingUser)
 	}
 
-	err = putUser(user)
 	if err != nil {
 		//See if we can pass err instead
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,

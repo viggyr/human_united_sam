@@ -26,37 +26,45 @@ type User struct {
 	UserHelps       []string `json: "userhelps"`
 }
 
+func getHeaders() map[string]string {
+	return map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
+		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
+}
+
 func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
 	switch req.HTTPMethod {
 	case "GET":
 		return fetch(req)
 	case "POST":
 		return insert(req)
+	case "DELETE":
+		return delete(req)
 	default:
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusMethodNotAllowed,
-			Body: http.StatusText(http.StatusMethodNotAllowed)}, nil
+			Headers: getHeaders(),
+			Body:    http.StatusText(http.StatusMethodNotAllowed)}, nil
 	}
 }
 
 func fetch(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	users, err := getUsers()
 	if err != nil {
-		//See if we can pass err instead
-
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,
-			Body: err.Error()}, nil
+			Headers: getHeaders(),
+			Body:    err.Error()}, nil
 	}
 	users_json, err := json.Marshal(users)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusInternalServerError,
+			Headers:    getHeaders(),
 			Body:       http.StatusText(http.StatusInternalServerError)}, nil
 	}
-	headers := map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
-		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
+
 	return events.APIGatewayProxyResponse{
 		Body:       string(users_json),
-		Headers:    headers,
+		Headers:    getHeaders(),
 		StatusCode: 201,
 	}, nil
 }
@@ -65,7 +73,8 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 
 	if request.Headers["content-type"] != "application/json" && request.Headers["Content-Type"] != "application/json" {
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusNotAcceptable,
-			Body: http.StatusText(http.StatusNotAcceptable)}, nil
+			Headers: getHeaders(),
+			Body:    http.StatusText(http.StatusNotAcceptable)}, nil
 	}
 	user := new(User)
 
@@ -79,21 +88,26 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 	user.JoinedDate = time.Now().Local().String()
 	if err != nil {
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest,
-			Body: http.StatusText(http.StatusBadRequest)}, nil
+			Headers: getHeaders(),
+			Body:    http.StatusText(http.StatusBadRequest)}, nil
 	}
 	err = putUser(user)
 	if err != nil {
 		//See if we can pass err instead
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,
-			Body: err.Error()}, nil
+			Headers: getHeaders(),
+			Body:    err.Error()}, nil
 	}
-	headers := map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
-		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
+
 	return events.APIGatewayProxyResponse{
 		Body:       fmt.Sprintf("Successfully added the user"),
-		Headers:    headers,
+		Headers:    getHeaders(),
 		StatusCode: 201,
 	}, nil
+}
+
+func delete(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
 }
 
 func main() {

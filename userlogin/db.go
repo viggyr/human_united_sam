@@ -88,7 +88,7 @@ func putUser(user *User) error {
 	return err
 }
 
-func checkIfUserExists(usermail string) (bool, error) {
+func checkIfUserExists(usermail string) (*User, error) {
 	filt := expression.Name("Email").Equal(expression.Value(usermail))
 	expr, err := expression.NewBuilder().WithFilter(filt).Build()
 	if err != nil {
@@ -106,11 +106,15 @@ func checkIfUserExists(usermail string) (bool, error) {
 	result, err := db.Scan(input)
 	if err != nil {
 		fmt.Printf("Failed to scan the table %s using filter expression", usersTable)
-		return false, err
+		return nil, err
 	}
 	if len(result.Items) == 0 {
-		return false, nil
+		return nil, nil
 	}
-	return true, nil
-
+	user := new(User)
+	err = dynamodbattribute.UnmarshalMap(result.Items[0], &user)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
