@@ -69,6 +69,9 @@ func putUser(user *User) error {
 			"Name": {
 				S: aws.String(user.Name),
 			},
+			"Email": {
+				S: aws.String(user.Email),
+			},
 			"JoinedDate": {
 				S: aws.String(user.JoinedDate),
 			},
