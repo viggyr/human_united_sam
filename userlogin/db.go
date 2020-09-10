@@ -91,30 +91,31 @@ func putUser(user *User) error {
 	return err
 }
 
-func updateUserLastLogin(loginTime string, email string) error {
+func updateUserLastLogin(loginTime string, userID string) error {
 	input := &dynamodb.UpdateItemInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":login": {
+			":l": {
 				S: aws.String(loginTime),
 			},
 		},
 		TableName: aws.String(usersTable),
 		Key: map[string]*dynamodb.AttributeValue{
-			"Email": {
-				S: aws.String(email),
+			"Id": {
+				S: aws.String(userID),
 			},
 		},
 		ReturnValues:     aws.String("UPDATED_NEW"),
-		UpdateExpression: aws.String("set LastLogin = :login"),
+		UpdateExpression: aws.String("set LastLogin = :l"),
 	}
 
 	_, err := db.UpdateItem(input)
 	return err
 }
 
-func checkIfUserExists(usermail string) (bool, error) {
+func checkIfUserExists(usermail string) (string, error) {
 	filt := expression.Name("Email").Equal(expression.Value(usermail))
-	expr, err := expression.NewBuilder().WithFilter(filt).Build()
+	proj := expression.NamesList(expression.Name("Id"))
+	expr, err := expression.NewBuilder().WithFilter(filt).WithProjection(proj).Build()
 	if err != nil {
 		fmt.Println("Failed to build filter by email expression ")
 		fmt.Println(err.Error())
@@ -130,18 +131,15 @@ func checkIfUserExists(usermail string) (bool, error) {
 	result, err := db.Scan(input)
 	if err != nil {
 		fmt.Printf("Failed to scan the table %s using filter expression", usersTable)
-		return false, err
+		return "", err
 	}
 	if len(result.Items) == 0 {
-		return false, nil
+		return "", nil
 	}
-	/*
-		No need to return user, just check if exists!
-		user := new(User)
-		err = dynamodbattribute.UnmarshalMap(result.Items[0], &user)
-		if err != nil {
-			return nil, err
-		}
-	*/
-	return true, nil
+	user := new(User)
+	err = dynamodbattribute.UnmarshalMap(result.Items[0], &user)
+	if err != nil {
+		return "", err
+	}
+	return user.ID, nil
 }

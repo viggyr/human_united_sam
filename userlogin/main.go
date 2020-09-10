@@ -7,10 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/google/uuid"
 )
 
 type User struct {
@@ -77,14 +76,15 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 	user := new(User)
 	err := json.Unmarshal([]byte(request.Body), user)
 	currTime := time.Now().Local().String()
-	existingUser, err := checkIfUserExists(user.Email)
+	existingUserID, err := checkIfUserExists(user.Email)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Headers:    getHeaders(),
-			Body:       err.Error()}, nil
+			Body:       fmt.Sprintf("Failed to check if user exists")}, nil
 	}
-	if !existingUser {
+
+	if existingUserID == "" {
 		user.ID = uuid.New().String()
 		user.JoinedDate = currTime
 		user.LastLogin = currTime
@@ -92,14 +92,18 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 		user.SamaritanPoints = 10
 		err = putUser(user)
 	} else {
-		err = updateUserLastLogin(currTime, user.Email)
-	}
-
-	if err != nil {
-		//See if we can pass err instead
-		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,
-			Headers: getHeaders(),
-			Body:    err.Error()}, nil
+		err = updateUserLastLogin(currTime, existingUserID)
+		if err != nil {
+			//See if we can pass err instead
+			return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,
+				Headers: getHeaders(),
+				Body:    err.Error()}, nil
+		} else {
+			return events.APIGatewayProxyResponse{
+				StatusCode: 201,
+				Headers:    getHeaders(),
+				Body:       fmt.Sprintf("Sucessfully updated existing user")}, nil
+		}
 	}
 
 	return events.APIGatewayProxyResponse{
