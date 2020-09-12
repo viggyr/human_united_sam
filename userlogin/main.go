@@ -38,6 +38,10 @@ func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, 
 		return fetch(req)
 	case "POST":
 		return insert(req)
+	case "OPTIONS":
+		return events.APIGatewayProxyResponse{
+			StatusCode: 200,
+			Headers:    getHeaders()}, nil
 	default:
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusMethodNotAllowed,
 			Headers: getHeaders(),

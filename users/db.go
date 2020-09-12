@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -57,32 +58,125 @@ func getUsers() ([]*User, error) {
 	return users, nil
 }
 
-func putUser(user *User) error {
-	input := &dynamodb.PutItemInput{
-		TableName: aws.String(usersTable),
-		Item: map[string]*dynamodb.AttributeValue{
-			"Id": {
-				S: aws.String(user.ID),
-			},
-			"Name": {
-				S: aws.String(user.Name),
-			},
-			"JoinedDate": {
-				S: aws.String(user.JoinedDate),
-			},
-			"SamaritanPoints": {
-				S: aws.String(user.SamaritanPoints),
-			},
-			"Location": {
-				S: aws.String(user.Location),
-			},
-		},
+func deleteIssueForUser(userID string, issueID string) error {
+	return nil
+}
+func deleteHelpForUser(userID string, issueID string) error {
+	return nil
+}
+
+func deleteListItemForUser(userID string, issueID string, scenario string) error {
+	switch scenario {
+	case "issue":
+		return deleteIssueForUser(userID, issueID)
+	case "help":
+		return deleteHelpForUser(userID, issueID)
+	default:
+		return errors.New("Invalid Scenario")
+	}
+}
+
+func addIssueForUser(userId string, issueId string) error {
+	issueIDList := []string{issueId}
+	issueAVs, err := dynamodbattribute.MarshalList(issueIDList)
+	if err != nil {
+		fmt.Printf("Could not Marshal issue id list %s", err.Error())
+		return err
 	}
 
-	_, err := db.PutItem(input)
+	input := &dynamodb.UpdateItemInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":i": {
+				L: issueAVs,
+			},
+			":empty_list": {
+				L: []*dynamodb.AttributeValue{},
+			},
+		},
+		TableName: aws.String(usersTable),
+		Key: map[string]*dynamodb.AttributeValue{
+			"Id": {
+				S: aws.String(userId),
+			},
+		},
+		ReturnValues:     aws.String("ALL_NEW"),
+		UpdateExpression: aws.String("SET UserIssues = list_append(if_not_exists(UserIssues, :empty_list),:i)"),
+	}
+	_, err = db.UpdateItem(input)
+	return err
+}
+func addHelpForUser(userId string, issueId string) error {
+	issueIDList := []string{issueId}
+	issueAVs, err := dynamodbattribute.MarshalList(issueIDList)
+	if err != nil {
+		fmt.Printf("Could not Marshal issue id list %s", err.Error())
+		return err
+	}
+	input := &dynamodb.UpdateItemInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":i": {
+				L: issueAVs,
+			},
+			":empty_list": {
+				L: []*dynamodb.AttributeValue{},
+			},
+		},
+		TableName: aws.String(usersTable),
+		Key: map[string]*dynamodb.AttributeValue{
+			"Id": {
+				S: aws.String(userId),
+			},
+		},
+		ReturnValues:     aws.String("ALL_NEW"),
+		UpdateExpression: aws.String("SET UserHelps = list_append(if_not_exists(UserHelps, :empty_list),:i)"),
+	}
+	_, err = db.UpdateItem(input)
 	return err
 }
 
-func getUser(mail string) {
+func addListItemForUser(userID string, issueID string, scenario string) error {
+	switch scenario {
+	case "issue":
+		return addIssueForUser(userID, issueID)
+	case "help":
+		return addHelpForUser(userID, issueID)
+	default:
+		return errors.New("Invalid Scenario passed!!")
+	}
+}
 
+func updateUser(userId string, userReq *UserRequest) error {
+	switch userReq.Action {
+	case "DELETE":
+		return deleteListItemForUser(userId, userReq.IssueID, userReq.Scenario)
+	case "ADD":
+		return addListItemForUser(userId, userReq.IssueID, userReq.Scenario)
+	default:
+		return nil
+	}
+}
+
+func getUserById(userId string) (*User, error) {
+	input := &dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"Id": {
+				S: aws.String(userId),
+			},
+		},
+		TableName: aws.String(usersTable),
+	}
+	result, err := db.GetItem(input)
+	if err != nil {
+		fmt.Printf("Failed to get Item from table %s for %s", usersTable, userId)
+		return nil, err
+	}
+	if result == nil {
+		return nil, nil
+	}
+	user := new(User)
+	err = dynamodbattribute.UnmarshalMap(result.Item, &user)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
