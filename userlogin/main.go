@@ -22,6 +22,11 @@ type User struct {
 	SamaritanPoints int    `json:"samaritanpoints"`
 }
 
+type LoginResponse struct {
+	UserID          string
+	SamaritanPoints int
+}
+
 func getHeaders() map[string]string {
 	return map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
 		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
@@ -74,40 +79,64 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 			Body:       http.StatusText(http.StatusNotAcceptable)}, nil
 	}
 	user := new(User)
+	loginResponse := new(LoginResponse)
 	err := json.Unmarshal([]byte(request.Body), user)
 	currTime := time.Now().Local().String()
-	existingUserID, err := checkIfUserExists(user.Email)
+	existingUser, err := checkIfUserExists(user.Email)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
+			StatusCode: http.StatusInternalServerError,
 			Headers:    getHeaders(),
 			Body:       fmt.Sprintf("Failed to check if user exists")}, nil
 	}
 
-	if existingUserID == "" {
-		user.ID = uuid.New().String()
-		user.JoinedDate = currTime
-		user.LastLogin = currTime
-		// default samaratian points - 10
-		user.SamaritanPoints = 10
-		err = putUser(user)
-	} else {
-		err = updateUserLastLogin(currTime, existingUserID)
+	if existingUser != nil {
+		err = updateUserLastLogin(currTime, existingUser.ID)
 		if err != nil {
 			//See if we can pass err instead
-			return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,
-				Headers: getHeaders(),
-				Body:    err.Error()}, nil
-		} else {
 			return events.APIGatewayProxyResponse{
-				StatusCode: 201,
+				StatusCode: http.StatusInternalServerError,
 				Headers:    getHeaders(),
-				Body:       fmt.Sprintf("Sucessfully updated existing user")}, nil
+				Body:       err.Error()}, nil
 		}
+		loginResponse.UserID = existingUser.ID
+		loginResponse.SamaritanPoints = existingUser.SamaritanPoints
+		loginJson, err := json.Marshal(loginResponse)
+		if err != nil {
+			return events.APIGatewayProxyResponse{
+				StatusCode: http.StatusInternalServerError,
+				Body:       http.StatusText(http.StatusInternalServerError),
+				Headers:    getHeaders()}, nil
+		}
+		return events.APIGatewayProxyResponse{
+			StatusCode: 201,
+			Headers:    getHeaders(),
+			Body:       string(loginJson)}, nil
 	}
 
+	user.ID = uuid.New().String()
+	user.JoinedDate = currTime
+	user.LastLogin = currTime
+	// default samaratian points - 10
+	user.SamaritanPoints = 10
+	err = putUser(user)
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       http.StatusText(http.StatusInternalServerError),
+			Headers:    getHeaders()}, nil
+	}
+	loginResponse.UserID = user.ID
+	loginResponse.SamaritanPoints = user.SamaritanPoints
+	loginJson, err := json.Marshal(loginResponse)
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       http.StatusText(http.StatusInternalServerError),
+			Headers:    getHeaders()}, nil
+	}
 	return events.APIGatewayProxyResponse{
-		Body:       fmt.Sprintf("Successfully added the user"),
+		Body:       string(loginJson),
 		Headers:    getHeaders(),
 		StatusCode: 201,
 	}, nil
