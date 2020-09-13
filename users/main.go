@@ -14,7 +14,7 @@ type User struct {
 	ID              string   `json:"id"`
 	Name            string   `json:"name"`
 	Email           string   `json:"email"`
-	ProfileImageUrl string   `json:"imageurl"`
+	ProfileImageUrl string   `json:"profileimageurl"`
 	JoinedDate      string   `json:"joineddate"`
 	LastLogin       string   `json:"lastlogin"`
 	SamaritanPoints int      `json:"samaritanpoints"`
