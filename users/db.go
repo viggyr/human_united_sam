@@ -120,6 +120,9 @@ func addHelpForUser(userId string, issueId string) error {
 			":empty_list": {
 				L: []*dynamodb.AttributeValue{},
 			},
+			":s": {
+				N: aws.String("5"),
+			},
 		},
 		TableName: aws.String(usersTable),
 		Key: map[string]*dynamodb.AttributeValue{
@@ -128,7 +131,7 @@ func addHelpForUser(userId string, issueId string) error {
 			},
 		},
 		ReturnValues:     aws.String("ALL_NEW"),
-		UpdateExpression: aws.String("SET UserHelps = list_append(if_not_exists(UserHelps, :empty_list),:i)"),
+		UpdateExpression: aws.String("SET UserHelps = list_append(if_not_exists(UserHelps, :empty_list),:i), SamaritanPoints = SamaritanPoints + :s"),
 	}
 	_, err = db.UpdateItem(input)
 	return err
