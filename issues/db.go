@@ -34,7 +34,7 @@ func getItems() ([]*Issue, error) {
 	input := &dynamodb.ScanInput{
 		TableName: aws.String(IssuesTable),
 	}
-
+	fmt.Println(IssuesTable)
 	result, err := db.Scan(input)
 	if err != nil {
 		return nil, err
@@ -54,6 +54,30 @@ func getItems() ([]*Issue, error) {
 		issues = append(issues, issue)
 	}
 	return issues, nil
+}
+func getIssueById(issueID string) (*Issue, error) {
+	input := &dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"Id": {
+				S: aws.String(issueID),
+			},
+		},
+		TableName: aws.String(IssuesTable),
+	}
+	result, err := db.GetItem(input)
+	if err != nil {
+		fmt.Printf("Failed to get Item from table %s for %s", IssuesTable, issueID)
+		return nil, err
+	}
+	if result == nil {
+		return nil, nil
+	}
+	issue := new(Issue)
+	err = dynamodbattribute.UnmarshalMap(result.Item, &issue)
+	if err != nil {
+		return nil, err
+	}
+	return issue, nil
 }
 
 func putItem(issue *Issue) error {
@@ -80,6 +104,9 @@ func putItem(issue *Issue) error {
 			},
 			"UserID": {
 				S: aws.String(issue.UserID),
+			},
+			"UserName": {
+				S: aws.String(issue.UserName),
 			},
 			"Personal": {
 				N: aws.String(strconv.Itoa(issue.Personal)),

@@ -18,7 +18,8 @@ type Issue struct {
 	Title    string   `json:"title"`
 	Body     string   `json:"body"`
 	Private  int      `json:"private"`
-	UserID   string   `json:"user_id"`
+	UserID   string   `json:"userid"`
+	UserName string   `json:"username"`
 	Location string   `json:"location"`
 	Personal int      `json:"personal"`
 	Helpers  []string `json:"helpers"`
@@ -42,28 +43,49 @@ func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, 
 func fetch(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	headers := map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
 		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
-	issues, err := getItems()
-	if err != nil {
-		//See if we can pass err instead
-		fmt.Println("Failed to fetch data %s", err)
-		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,
-			Headers: headers,
-			Body:    err.Error()}, nil
-	}
-	issues_json, err := json.Marshal(issues)
-	if err != nil {
-
+	if issueID, ok := request.PathParameters["issueId"]; ok {
+		fmt.Println(issueID)
+		issue, err := getIssueById(issueID)
+		issue_json, err := json.Marshal(issue)
+		if err != nil {
+			return events.APIGatewayProxyResponse{
+				StatusCode: http.StatusInternalServerError,
+				Headers:    headers,
+				Body:       http.StatusText(http.StatusInternalServerError)}, nil
+		}
 		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusInternalServerError,
+			Body:       string(issue_json),
 			Headers:    headers,
-			Body:       http.StatusText(http.StatusInternalServerError)}, nil
+			StatusCode: 201,
+		}, nil
+	} else {
+
+		issues, err := getItems()
+
+		if err != nil {
+			//See if we can pass err instead
+			fmt.Printf("Failed to fetch data %s", err)
+			return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,
+				Headers: headers,
+				Body:    err.Error()}, nil
+		}
+		fmt.Println(issues)
+		issues_json, err := json.Marshal(issues)
+		if err != nil {
+
+			return events.APIGatewayProxyResponse{
+				StatusCode: http.StatusInternalServerError,
+				Headers:    headers,
+				Body:       http.StatusText(http.StatusInternalServerError)}, nil
+		}
+		fmt.Println("Success")
+		return events.APIGatewayProxyResponse{
+			Body:       string(issues_json),
+			Headers:    headers,
+			StatusCode: 201,
+		}, nil
 	}
-	fmt.Println("Success")
-	return events.APIGatewayProxyResponse{
-		Body:       string(issues_json),
-		Headers:    headers,
-		StatusCode: 201,
-	}, nil
+
 }
 
 func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
