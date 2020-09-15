@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
-
-	"github.com/google/uuid"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -17,13 +14,18 @@ type User struct {
 	ID              string   `json:"id"`
 	Name            string   `json:"name"`
 	Email           string   `json:"email"`
-	ProfileImageUrl string   `json: "imageurl"`
-	Location        string   `json:"location"`
+	ProfileImageUrl string   `json:"profileimageurl"`
 	JoinedDate      string   `json:"joineddate"`
-	LastLogin       string   `json: "lastlogin"`
-	SamaritanPoints string   `json:"samaritanpoints"`
+	LastLogin       string   `json:"lastlogin"`
+	SamaritanPoints int      `json:"samaritanpoints"`
 	UserIssues      []string `json:"userissues"`
-	UserHelps       []string `json: "userhelps"`
+	UserHelps       []string `json:"userhelps"`
+}
+
+type UserRequest struct {
+	Action   string `json:"action"`
+	Scenario string `json:"scenario"`
+	IssueID  string `json:"issue_id"`
 }
 
 func getHeaders() map[string]string {
@@ -32,12 +34,17 @@ func getHeaders() map[string]string {
 }
 
 func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-
+	userId := req.PathParameters["userId"]
+	fmt.Printf("Path parameter user id :%s", userId)
 	switch req.HTTPMethod {
 	case "GET":
-		return fetch(req)
-	case "POST":
-		return insert(req)
+		return fetch(req, userId)
+	case "PUT":
+		return insert(req, userId)
+	case "OPTIONS":
+		return events.APIGatewayProxyResponse{
+			StatusCode: 200,
+			Headers:    getHeaders()}, nil
 	default:
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusMethodNotAllowed,
 			Headers: getHeaders(),
@@ -45,14 +52,15 @@ func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, 
 	}
 }
 
-func fetch(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	users, err := getUsers()
+func fetch(request events.APIGatewayProxyRequest, userId string) (events.APIGatewayProxyResponse, error) {
+	userInfo, err := getUserById(userId)
 	if err != nil {
-		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,
-			Headers: getHeaders(),
-			Body:    err.Error()}, nil
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusBadRequest,
+			Headers:    getHeaders(),
+			Body:       err.Error()}, nil
 	}
-	users_json, err := json.Marshal(users)
+	user_json, err := json.Marshal(userInfo)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -61,44 +69,37 @@ func fetch(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespons
 	}
 
 	return events.APIGatewayProxyResponse{
-		Body:       string(users_json),
+		Body:       string(user_json),
 		Headers:    getHeaders(),
-		StatusCode: 201,
+		StatusCode: 200,
 	}, nil
 }
 
-func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func insert(request events.APIGatewayProxyRequest, userId string) (events.APIGatewayProxyResponse, error) {
 
 	if request.Headers["content-type"] != "application/json" && request.Headers["Content-Type"] != "application/json" {
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusNotAcceptable,
 			Headers: getHeaders(),
 			Body:    http.StatusText(http.StatusNotAcceptable)}, nil
 	}
-	user := new(User)
-
-	// Inserting a new user would first get all users , check if user exists.
-	// if user exists , do partial update with the fields passed in request body.
-	// If user does not exists, create new entry with default values where applicable.
-	//users, err := getItems()
-
-	err := json.Unmarshal([]byte(request.Body), user)
-	user.ID = uuid.New().String()
-	user.JoinedDate = time.Now().Local().String()
+	userRequest := new(UserRequest)
+	err := json.Unmarshal([]byte(request.Body), userRequest)
 	if err != nil {
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest,
 			Headers: getHeaders(),
 			Body:    http.StatusText(http.StatusBadRequest)}, nil
 	}
-	err = putUser(user)
+	err = updateUser(userId, userRequest)
 	if err != nil {
-		//See if we can pass err instead
-		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,
-			Headers: getHeaders(),
-			Body:    err.Error()}, nil
+
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Headers:    getHeaders(),
+			Body:       err.Error()}, nil
 	}
 
 	return events.APIGatewayProxyResponse{
-		Body:       fmt.Sprintf("Successfully added the user"),
+		Body:       fmt.Sprintf("Successfully updated User"),
 		Headers:    getHeaders(),
 		StatusCode: 201,
 	}, nil

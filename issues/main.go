@@ -45,19 +45,20 @@ func fetch(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespons
 	issues, err := getItems()
 	if err != nil {
 		//See if we can pass err instead
-
+		fmt.Println("Failed to fetch data %s", err)
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusBadGateway,
 			Headers: headers,
 			Body:    err.Error()}, nil
 	}
-	fmt.Println(issues)
 	issues_json, err := json.Marshal(issues)
 	if err != nil {
+
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusInternalServerError,
 			Headers:    headers,
 			Body:       http.StatusText(http.StatusInternalServerError)}, nil
 	}
+	fmt.Println("Success")
 	return events.APIGatewayProxyResponse{
 		Body:       string(issues_json),
 		Headers:    headers,

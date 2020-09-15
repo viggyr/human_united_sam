@@ -112,9 +112,9 @@ func updateUserLastLogin(loginTime string, userID string) error {
 	return err
 }
 
-func checkIfUserExists(usermail string) (string, error) {
+func checkIfUserExists(usermail string) (*User, error) {
 	filt := expression.Name("Email").Equal(expression.Value(usermail))
-	proj := expression.NamesList(expression.Name("Id"))
+	proj := expression.NamesList(expression.Name("Id"), expression.Name("SamaritanPoints"))
 	expr, err := expression.NewBuilder().WithFilter(filt).WithProjection(proj).Build()
 	if err != nil {
 		fmt.Println("Failed to build filter by email expression")
@@ -130,16 +130,16 @@ func checkIfUserExists(usermail string) (string, error) {
 
 	result, err := db.Scan(input)
 	if err != nil {
-		fmt.Printf("Failed to scan the table %s using filter expression %s", usersTable, err
-		return "", err
+		fmt.Printf("Failed to scan the table %s using filter expression", usersTable)
+		return nil, err
 	}
 	if len(result.Items) == 0 {
-		return "", nil
+		return nil, nil
 	}
 	user := new(User)
 	err = dynamodbattribute.UnmarshalMap(result.Items[0], &user)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return user.ID, nil
+	return user, nil
 }
