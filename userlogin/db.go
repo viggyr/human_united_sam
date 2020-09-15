@@ -117,7 +117,7 @@ func checkIfUserExists(usermail string) (string, error) {
 	proj := expression.NamesList(expression.Name("Id"))
 	expr, err := expression.NewBuilder().WithFilter(filt).WithProjection(proj).Build()
 	if err != nil {
-		fmt.Println("Failed to build filter by email expression ")
+		fmt.Println("Failed to build filter by email expression")
 		fmt.Println(err.Error())
 	}
 	input := &dynamodb.ScanInput{
@@ -130,7 +130,7 @@ func checkIfUserExists(usermail string) (string, error) {
 
 	result, err := db.Scan(input)
 	if err != nil {
-		fmt.Printf("Failed to scan the table %s using filter expression", usersTable)
+		fmt.Printf("Failed to scan the table %s using filter expression %s", usersTable, err
 		return "", err
 	}
 	if len(result.Items) == 0 {

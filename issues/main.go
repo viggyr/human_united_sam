@@ -13,14 +13,15 @@ import (
 )
 
 type Issue struct {
-	ID       string `json:"id"`
-	Created  string `json:"created"`
-	Title    string `json:"title"`
-	Body     string `json:"body"`
-	Private  int    `json:"private"`
-	User     string `json:"user"`
-	Location string `json:"location"`
-	Personal int    `json:"personal"`
+	ID       string   `json:"id"`
+	Created  string   `json:"created"`
+	Title    string   `json:"title"`
+	Body     string   `json:"body"`
+	Private  int      `json:"private"`
+	UserID   string   `json:"user_id"`
+	Location string   `json:"location"`
+	Personal int      `json:"personal"`
+	Helpers  []string `json:"helpers"`
 }
 
 func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -65,16 +66,6 @@ func fetch(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespons
 }
 
 func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-
-	// issue := Issue{
-	// 	ID:       "1234",
-	// 	Created:  "08/30/2020",
-	// 	Title:    "Dummy Issue",
-	// 	Body:     "I got a real problem here. Please help me",
-	// 	Private:  1,
-	// 	User:     "Viggy",
-	// 	Location: "Bangalore",
-	// }
 	headers := map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
 		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
 	if request.Headers["content-type"] != "application/json" && request.Headers["Content-Type"] != "application/json" {

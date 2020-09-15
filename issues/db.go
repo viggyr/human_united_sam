@@ -13,7 +13,6 @@ import (
 
 var db *dynamodb.DynamoDB
 
-//const IssuesTable = "huManUnited-IssuesTable-HCOFLC4PHPHQ"
 var IssuesTable = os.Getenv("ISSUESTABLE")
 
 func createDBConnection(env string, endpoint string) {
@@ -43,11 +42,9 @@ func getItems() ([]*Issue, error) {
 	if len(result.Items) == 0 {
 		return nil, nil
 	}
-	fmt.Println(result)
 	issues := make([]*Issue, 0)
 	for _, i := range result.Items {
 		issue := new(Issue)
-		fmt.Println(i)
 		err = dynamodbattribute.UnmarshalMap(i, &issue)
 
 		if err != nil {
@@ -81,11 +78,14 @@ func putItem(issue *Issue) error {
 			"Location": {
 				S: aws.String(issue.Location),
 			},
-			"User": {
-				S: aws.String(issue.User),
+			"UserID": {
+				S: aws.String(issue.UserID),
 			},
 			"Personal": {
 				N: aws.String(strconv.Itoa(issue.Personal)),
+			},
+			"Helpers": {
+				SS: aws.StringSlice(issue.Helpers),
 			},
 		},
 	}

@@ -38,8 +38,6 @@ func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, 
 		return fetch(req)
 	case "POST":
 		return insert(req)
-	case "DELETE":
-		return delete(req)
 	default:
 		return events.APIGatewayProxyResponse{StatusCode: http.StatusMethodNotAllowed,
 			Headers: getHeaders(),
@@ -104,10 +102,6 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 		Headers:    getHeaders(),
 		StatusCode: 201,
 	}, nil
-}
-
-func delete(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-
 }
 
 func main() {
