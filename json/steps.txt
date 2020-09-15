@@ -1,0 +1,6 @@
+# use localhost on mac/linux
+
+aws dynamodb list-tables --endpoint-url http://192.168.99.100:8000
+aws dynamodb delete-table --table-name UsersTable --endpoint-url http://192.168.99.100:8000
+aws dynamodb scan --table-name UsersTable --endpoint-url http://192.168.99.100:8000
+aws dynamodb create-table --cli-input-json file://C:\Users\sabnisani\Hackathon-Skillenza\human_united_sam\json\create-users-table.json --endpoint-url http://192.168.99.100:8000

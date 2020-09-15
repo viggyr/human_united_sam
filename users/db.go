@@ -64,6 +64,9 @@ func deleteIssueForUser(userID string, issueID string) error {
 func deleteHelpForUser(userID string, issueID string) error {
 	return nil
 }
+func deleteInterestForUser(userID string, issueID string) error {
+	return nil
+}
 
 func deleteListItemForUser(userID string, issueID string, scenario string) error {
 	switch scenario {
@@ -71,12 +74,15 @@ func deleteListItemForUser(userID string, issueID string, scenario string) error
 		return deleteIssueForUser(userID, issueID)
 	case "help":
 		return deleteHelpForUser(userID, issueID)
+	case "interest":
+		return deleteInterestForUser(userID, issueID)
 	default:
 		return errors.New("Invalid Scenario")
 	}
 }
 
 func addIssueForUser(userId string, issueId string) error {
+	fmt.Printf("User %s has posted issue with issue ID %s", userId, issueId)
 	issueIDList := []string{issueId}
 	issueAVs, err := dynamodbattribute.MarshalList(issueIDList)
 	if err != nil {
@@ -105,7 +111,9 @@ func addIssueForUser(userId string, issueId string) error {
 	_, err = db.UpdateItem(input)
 	return err
 }
+
 func addHelpForUser(userId string, issueId string) error {
+	fmt.Printf("User %s is providing help for issue ID %s", userId, issueId)
 	issueIDList := []string{issueId}
 	issueAVs, err := dynamodbattribute.MarshalList(issueIDList)
 	if err != nil {
@@ -137,12 +145,44 @@ func addHelpForUser(userId string, issueId string) error {
 	return err
 }
 
+func addInterestForUser(userId string, issueId string) error {
+	fmt.Printf("User %s interested in issue ID %s", userId, issueId)
+	issueIDList := []string{issueId}
+	issueAVs, err := dynamodbattribute.MarshalList(issueIDList)
+	if err != nil {
+		fmt.Printf("Could not Marshal issue id list %s", err.Error())
+		return err
+	}
+	input := &dynamodb.UpdateItemInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":i": {
+				L: issueAVs,
+			},
+			":empty_list": {
+				L: []*dynamodb.AttributeValue{},
+			},
+		},
+		TableName: aws.String(usersTable),
+		Key: map[string]*dynamodb.AttributeValue{
+			"Id": {
+				S: aws.String(userId),
+			},
+		},
+		ReturnValues:     aws.String("ALL_NEW"),
+		UpdateExpression: aws.String("SET UserInterests = list_append(if_not_exists(UserInterests, :empty_list),:i)"),
+	}
+	_, err = db.UpdateItem(input)
+	return err
+}
+
 func addListItemForUser(userID string, issueID string, scenario string) error {
 	switch scenario {
 	case "issue":
 		return addIssueForUser(userID, issueID)
 	case "help":
 		return addHelpForUser(userID, issueID)
+	case "interest":
+		return addInterestForUser(userID, issueID)
 	default:
 		return errors.New("Invalid Scenario passed!!")
 	}

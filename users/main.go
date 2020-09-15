@@ -20,6 +20,7 @@ type User struct {
 	SamaritanPoints int      `json:"samaritanpoints"`
 	UserIssues      []string `json:"userissues"`
 	UserHelps       []string `json:"userhelps"`
+	UserInterests   []string `json:userinterests`
 }
 
 type UserRequest struct {
