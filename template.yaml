@@ -27,6 +27,13 @@ Parameters:
       - IssuesTable
       - huManUnited-IssuesTable-HCOFLC4PHPHQ
     Default: 'IssuesTable'
+  POSTSTABLE:
+    Type: String
+    AllowedValues:
+    - PostsTable
+    # TODO: update table name
+    - huManUnited-PostsTable-HCOFLC4PHPHQ
+    Default: 'PostsTable'
   
   
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
@@ -78,7 +85,23 @@ Resources:
           Properties:
             Path: /issues
             Method: ANY
+<<<<<<< Updated upstream
 
+=======
+  DiscussionsFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: discussions/
+      Handler: discussions
+      Runtime: go1.x
+      Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
+      Events:
+        CatchAll:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /discussions
+            Method: ANY
+>>>>>>> Stashed changes
   UsersFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -87,10 +110,20 @@ Resources:
       Runtime: go1.x
       Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
       Events:
-        CatchAll:
+        Dummy1:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /users/{userId}
+            Method: ANY
+        Dummy2:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /userPosts/{userId}
+            Method: ANY
+        Dummy3:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /posts/{userId}
             Method: ANY
   
   UserloginFunction:
@@ -120,6 +153,18 @@ Resources:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
   UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - AttributeName: Id
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: Id
+          KeyType: HASH
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+  PostsTable:
     Type: AWS::DynamoDB::Table
     Properties: 
       AttributeDefinitions: 

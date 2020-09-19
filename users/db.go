@@ -9,12 +9,16 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
 var db *dynamodb.DynamoDB
 
 //const usersTable = "huManUnited-UsersTable-16HJ59LOVEINZ"
 var usersTable = os.Getenv("USERSTABLE")
+var postsTable = "PostsTable"
+
+// os.Getenv("POSTSTABLE")
 
 func createDBConnection(env string, endpoint string) {
 	if env == "AWS_SAM_LOCAL" {
@@ -56,6 +60,93 @@ func getUsers() ([]*User, error) {
 		users = append(users, user)
 	}
 	return users, nil
+}
+
+func addPost(post *Post) error {
+	input := &dynamodb.PutItemInput{
+		TableName: aws.String(postsTable),
+		Item: map[string]*dynamodb.AttributeValue{
+			"Id": {
+				S: aws.String(post.ID),
+			},
+			"Title": {
+				S: aws.String(post.Title),
+			},
+			"Description": {
+				S: aws.String(post.Description),
+			},
+			"PostTime": {
+				S: aws.String(post.PostTime),
+			},
+			"UserId": {
+				S: aws.String(post.UserId),
+			},
+		},
+	}
+
+	_, err := db.PutItem(input)
+	return err
+}
+
+func getPostsByUserId(userId string) ([]*Post, error) {
+	filt := expression.Name("UserId").Equal(expression.Value(userId))
+	expr, err := expression.NewBuilder().WithFilter(filt).Build()
+	if err != nil {
+		fmt.Println("Failed to build filter by email expression ")
+		fmt.Println(err.Error())
+	}
+	input := &dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 aws.String(postsTable),
+	}
+	result, err := db.Scan(input)
+	fmt.Println("Kiran: 3 %s", result)
+	if err != nil {
+		return nil, err
+	}
+	if len(result.Items) == 0 {
+		return nil, nil
+	}
+	posts := make([]*Post, 0)
+	for _, i := range result.Items {
+		post := new(Post)
+		err = dynamodbattribute.UnmarshalMap(i, &post)
+
+		if err != nil {
+			return nil, err
+		}
+
+		posts = append(posts, post)
+	}
+	return posts, nil
+}
+
+func getAllPosts() ([]*Post, error) {
+	input := &dynamodb.ScanInput{
+		TableName: aws.String(postsTable),
+	}
+	result, err := db.Scan(input)
+	if err != nil {
+		return nil, err
+	}
+	if len(result.Items) == 0 {
+		return nil, nil
+	}
+	posts := make([]*Post, 0)
+	for _, i := range result.Items {
+		post := new(Post)
+		err = dynamodbattribute.UnmarshalMap(i, &post)
+
+		if err != nil {
+			return nil, err
+		}
+
+		posts = append(posts, post)
+	}
+	return posts, nil
 }
 
 func deleteIssueForUser(userID string, issueID string) error {
