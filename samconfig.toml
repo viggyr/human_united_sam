@@ -9,5 +9,5 @@ region = "ap-south-1"
 profile = "default"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "AWSENVNAME=\"AWS\" DBSERVER=\"http://localhost:8000\" USERTABLE=\"huManUnited-UsersTable-16HJ59LOVEINZ\" ISSUETABLE=\"huManUnited-IssuesTable-HCOFLC4PHPHQ\""
+parameter_overrides = "AWSENVNAME=\"AWS\" DBSERVER=\"http://localhost:8000\" USERTABLE=\"huManUnited-UsersTable-16HJ59LOVEINZ\" ISSUETABLE=\"huManUnited-IssuesTable-HCOFLC4PHPHQ\"" POSTSTABLE=\"huManUnited-PostsTable-HCOFLC4PHPHQ\"" 
 
