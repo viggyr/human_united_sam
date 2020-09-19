@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -34,7 +35,6 @@ func getItems() ([]*Issue, error) {
 	input := &dynamodb.ScanInput{
 		TableName: aws.String(IssuesTable),
 	}
-	fmt.Println(IssuesTable)
 	result, err := db.Scan(input)
 	if err != nil {
 		return nil, err
@@ -77,6 +77,9 @@ func getIssueById(issueID string) (*Issue, error) {
 	if err != nil {
 		return nil, err
 	}
+	if reflect.DeepEqual(*issue, Issue{}) {
+		return nil, nil
+	}
 	return issue, nil
 }
 
@@ -113,6 +116,12 @@ func putItem(issue *Issue) error {
 			},
 			"Helpers": {
 				SS: aws.StringSlice(issue.Helpers),
+			},
+			"Discussion": {
+				SS: aws.StringSlice(issue.Discussion),
+			},
+			"Status": {
+				S: aws.String(issue.Status),
 			},
 		},
 	}

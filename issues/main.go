@@ -13,16 +13,18 @@ import (
 )
 
 type Issue struct {
-	ID       string   `json:"id"`
-	Created  string   `json:"created"`
-	Title    string   `json:"title"`
-	Body     string   `json:"body"`
-	Private  int      `json:"private"`
-	UserID   string   `json:"userid"`
-	UserName string   `json:"username"`
-	Location string   `json:"location"`
-	Personal int      `json:"personal"`
-	Helpers  []string `json:"helpers"`
+	ID         string   `json:"id"`
+	Created    string   `json:"created"`
+	Title      string   `json:"title"`
+	Body       string   `json:"body"`
+	Private    int      `json:"private"`
+	UserID     string   `json:"userid"`
+	UserName   string   `json:"username"`
+	Location   string   `json:"location"`
+	Personal   int      `json:"personal"`
+	Helpers    []string `json:"helpers"`
+	Discussion []string `json:"discussion"`
+	Status     string   `json:"status"`
 }
 
 func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -39,13 +41,12 @@ func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, 
 			Body:    http.StatusText(http.StatusMethodNotAllowed)}, nil
 	}
 }
-
 func fetch(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	headers := map[string]string{"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
 		"Access-Control-Allow-Methods": "OPTIONS,POST,GET"}
 	if issueID, ok := request.PathParameters["issueId"]; ok {
-		fmt.Println(issueID)
 		issue, err := getIssueById(issueID)
+
 		issue_json, err := json.Marshal(issue)
 		if err != nil {
 			return events.APIGatewayProxyResponse{
@@ -98,7 +99,9 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 	}
 	issue := new(Issue)
 	issue.Personal = 1
-	fmt.Println(request.Body)
+	issue.Helpers = []string{""}
+	issue.Helpers = []string{""}
+	issue.Status = "Need Help"
 	err := json.Unmarshal([]byte(request.Body), issue)
 	issue.ID = uuid.New().String()
 	issue.Created = time.Now().Local().String()
@@ -107,7 +110,6 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 			Headers: headers,
 			Body:    http.StatusText(http.StatusBadRequest)}, nil
 	}
-	fmt.Println(issue)
 	err = putItem(issue)
 	if err != nil {
 		//See if we can pass err instead
@@ -124,6 +126,7 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 	}, nil
 }
 
+//Add put for discussion and status
 func main() {
 	//get parameters here from environment
 	env := os.Getenv("AWSENV")
