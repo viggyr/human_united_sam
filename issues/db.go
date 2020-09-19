@@ -110,9 +110,9 @@ func updateStatusForIssue(issueId string, statusData *StatusRequest) error {
 }
 
 func updateHelpersForIssue(issueId string, helpersData *HelpersRequest) error {
-	fmt.Printf("User %s is providing help for issue ID %s", helpersData.UserID, issueId)
-	helperIDList := []string{helpersData.UserID}
-	helperAVs, err := dynamodbattribute.MarshalList(helperIDList)
+	fmt.Printf("User %s is providing help for issue ID %s", helpersData.UserName, issueId)
+	helperNameList := []string{helpersData.UserName}
+	helperAVs, err := dynamodbattribute.MarshalList(helperNameList)
 	if err != nil {
 		fmt.Printf("Could not Marshal user ids list %s", err.Error())
 		return err

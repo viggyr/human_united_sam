@@ -13,8 +13,9 @@ import (
 )
 
 type CommentsRequest struct {
-	UserID  string `json:"userid"`
-	Comment string `json:"comment"`
+	UserID   string `json:"userid"`
+	UserName string `json:"username"`
+	Comment  string `json:"comment"`
 }
 
 type Issue struct {
@@ -33,7 +34,7 @@ type Issue struct {
 }
 
 type HelpersRequest struct {
-	UserID string `json:"userid"`
+	UserName string `json:"username"`
 }
 
 type StatusRequest struct {
@@ -66,7 +67,6 @@ func router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, 
 func fetch(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	if issueID, ok := request.PathParameters["issueId"]; ok {
 		issue, err := getIssueById(issueID)
-
 		issue_json, err := json.Marshal(issue)
 		if err != nil {
 			return events.APIGatewayProxyResponse{
