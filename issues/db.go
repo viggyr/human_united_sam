@@ -101,7 +101,7 @@ func updateStatusForIssue(issueId string, statusData *StatusRequest) error {
 			},
 		},
 		ReturnValues:     aws.String("UPDATED_NEW"),
-		UpdateExpression: aws.String("set Status = :s"),
+		UpdateExpression: aws.String("set StatusMsg = :s"),
 	}
 
 	_, err := db.UpdateItem(input)
@@ -198,8 +198,8 @@ func putItem(issue *Issue) error {
 			"Personal": {
 				N: aws.String(strconv.Itoa(issue.Personal)),
 			},
-			"Status": {
-				S: aws.String(issue.Status),
+			"StatusMsg": {
+				S: aws.String(issue.StatusMsg),
 			},
 		},
 	}

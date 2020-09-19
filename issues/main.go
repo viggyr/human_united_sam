@@ -18,18 +18,18 @@ type CommentsRequest struct {
 }
 
 type Issue struct {
-	ID       string            `json:"id"`
-	Created  string            `json:"created"`
-	Title    string            `json:"title"`
-	Body     string            `json:"body"`
-	Private  int               `json:"private"`
-	UserID   string            `json:"userid"`
-	UserName string            `json:"username"`
-	Location string            `json:"location"`
-	Personal int               `json:"personal"`
-	Helpers  []string          `json:"helpers"`
-	Comments []CommentsRequest `json:comments`
-	Status   string            `json:"status"`
+	ID        string            `json:"id"`
+	Created   string            `json:"created"`
+	Title     string            `json:"title"`
+	Body      string            `json:"body"`
+	Private   int               `json:"private"`
+	UserID    string            `json:"userid"`
+	UserName  string            `json:"username"`
+	Location  string            `json:"location"`
+	Personal  int               `json:"personal"`
+	Helpers   []string          `json:"helpers"`
+	Comments  []CommentsRequest `json:comments`
+	StatusMsg string            `json:"statusmsg"`
 }
 
 type HelpersRequest struct {
@@ -37,7 +37,7 @@ type HelpersRequest struct {
 }
 
 type StatusRequest struct {
-	StatusMsg string `json: "statusmsg"`
+	StatusMsg string `json:"statusmsg"`
 }
 
 func getHeaders() map[string]string {
@@ -117,7 +117,7 @@ func insert(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 	}
 	issue := new(Issue)
 	issue.Personal = 1
-	issue.Status = "Need Help"
+	issue.StatusMsg = "Need Help"
 	err := json.Unmarshal([]byte(request.Body), issue)
 	issue.ID = uuid.New().String()
 	issue.Created = time.Now().Local().String()
