@@ -31,7 +31,6 @@ Parameters:
     Type: String
     AllowedValues:
     - PostsTable
-    # TODO: update table name
     - huManUnited-PostsTable-HCOFLC4PHPHQ
     Default: 'PostsTable'
   
@@ -85,23 +84,7 @@ Resources:
           Properties:
             Path: /issues
             Method: ANY
-<<<<<<< Updated upstream
-
-=======
-  DiscussionsFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    Properties:
-      CodeUri: discussions/
-      Handler: discussions
-      Runtime: go1.x
-      Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
-      Events:
-        CatchAll:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-          Properties:
-            Path: /discussions
-            Method: ANY
->>>>>>> Stashed changes
+            
   UsersFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -166,7 +149,8 @@ Resources:
         WriteCapacityUnits: 5
   PostsTable:
     Type: AWS::DynamoDB::Table
-    Properties: 
+    Properties:
+      TableName: postsTable
       AttributeDefinitions: 
         - AttributeName: Id
           AttributeType: S

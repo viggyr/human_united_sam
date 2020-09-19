@@ -18,8 +18,6 @@ var db *dynamodb.DynamoDB
 var usersTable = os.Getenv("USERSTABLE")
 var postsTable = "PostsTable"
 
-// os.Getenv("POSTSTABLE")
-
 func createDBConnection(env string, endpoint string) {
 	if env == "AWS_SAM_LOCAL" {
 		sess, err := session.NewSession(&aws.Config{
