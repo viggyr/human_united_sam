@@ -11,16 +11,17 @@ import (
 )
 
 type User struct {
-	ID              string   `json:"id"`
-	Name            string   `json:"name"`
-	Email           string   `json:"email"`
-	ProfileImageUrl string   `json:"profileimageurl"`
-	JoinedDate      string   `json:"joineddate"`
-	LastLogin       string   `json:"lastlogin"`
-	SamaritanPoints int      `json:"samaritanpoints"`
-	UserIssues      []string `json:"userissues"`
-	UserHelps       []string `json:"userhelps"`
-	UserInterests   []string `json:userinterests`
+	ID                string   `json:"id"`
+	Name              string   `json:"name"`
+	Email             string   `json:"email"`
+	ProfileImageUrl   string   `json:"profileimageurl"`
+	JoinedDate        string   `json:"joineddate"`
+	LastLogin         string   `json:"lastlogin"`
+	SamaritanPoints   int      `json:"samaritanpoints"`
+	UserIssues        []string `json:"userissues"`
+	UserHelps         []string `json:"userhelps"`
+	UserInterests     []string `json:userinterests`
+	UsersCurrentHelps []string `json:usercurrenthelps`
 }
 
 type UserRequest struct {
