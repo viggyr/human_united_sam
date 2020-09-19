@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -15,7 +14,7 @@ import (
 var db *dynamodb.DynamoDB
 
 //const usersTable = "huManUnited-UsersTable-16HJ59LOVEINZ"
-var usersTable = os.Getenv("USERSTABLE")
+var usersTable = "users"
 
 func createDBConnection(env string, endpoint string) {
 	if env == "AWS_SAM_LOCAL" {

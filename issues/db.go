@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"strconv"
 
@@ -14,7 +13,7 @@ import (
 
 var db *dynamodb.DynamoDB
 
-var IssuesTable = os.Getenv("ISSUESTABLE")
+var IssuesTable = "issues"
 
 func createDBConnection(env string, endpoint string) {
 	if env == "AWS_SAM_LOCAL" {

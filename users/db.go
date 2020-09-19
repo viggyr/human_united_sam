@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -15,8 +14,8 @@ import (
 var db *dynamodb.DynamoDB
 
 //const usersTable = "huManUnited-UsersTable-16HJ59LOVEINZ"
-var usersTable = os.Getenv("USERSTABLE")
-var postsTable = "PostsTable"
+var usersTable = "users"
+var postsTable = "posts"
 
 func createDBConnection(env string, endpoint string) {
 	if env == "AWS_SAM_LOCAL" {

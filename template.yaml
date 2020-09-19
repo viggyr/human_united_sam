@@ -15,25 +15,6 @@ Parameters:
   DBSERVER:
     Type: String
     Default: 'http://192.168.99.100:8000'
-  USERTABLE:
-    Type: String
-    AllowedValues:
-      - UsersTable
-      - huManUnited-UsersTable-16HJ59LOVEINZ
-    Default:  'UsersTable'
-  ISSUETABLE:
-    Type: String
-    AllowedValues:
-      - IssuesTable
-      - huManUnited-IssuesTable-HCOFLC4PHPHQ
-    Default: 'IssuesTable'
-  POSTSTABLE:
-    Type: String
-    AllowedValues:
-    - PostsTable
-    - huManUnited-PostsTable-HCOFLC4PHPHQ
-    Default: 'PostsTable'
-  
   
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
@@ -43,9 +24,7 @@ Globals:
       Variables:
         AWSENV: !Ref AWSENVNAME
         DBENDPOINT: !Ref DBSERVER
-        USERSTABLE: !Ref USERTABLE
-        ISSUESTABLE: !Ref ISSUETABLE
-
+        
 Resources:
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -67,6 +46,8 @@ Resources:
       CodeUri: issues/
       Handler: issues
       Runtime: go1.x
+      Policies:
+        - AmazonDynamoDBFullAccess
       Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
       Events:
         Dummy1:
@@ -91,6 +72,8 @@ Resources:
       CodeUri: users/
       Handler: users
       Runtime: go1.x
+      Policies:
+        - AmazonDynamoDBFullAccess
       Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
       Events:
         Dummy1:
@@ -115,6 +98,8 @@ Resources:
       CodeUri: userlogin/
       Handler: userlogin
       Runtime: go1.x
+      Policies:
+        - AmazonDynamoDBFullAccess
       Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
       Events:
         CatchAll:
@@ -122,10 +107,10 @@ Resources:
           Properties:
             Path: /userlogin
             Method: ANY
-
   IssuesTable:
     Type: AWS::DynamoDB::Table
     Properties: 
+      TableName: issues
       AttributeDefinitions: 
         - AttributeName: Id
           AttributeType: S
@@ -138,6 +123,7 @@ Resources:
   UsersTable:
     Type: AWS::DynamoDB::Table
     Properties: 
+      TableName: users
       AttributeDefinitions: 
         - AttributeName: Id
           AttributeType: S
@@ -150,7 +136,7 @@ Resources:
   PostsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: postsTable
+      TableName: posts
       AttributeDefinitions: 
         - AttributeName: Id
           AttributeType: S
