@@ -55,6 +55,90 @@ func getItems() ([]*Issue, error) {
 	}
 	return issues, nil
 }
+
+func updateCommentsForIssue(issueId string, commentData *CommentsRequest) error {
+	fmt.Printf("User %s is provided comment for issue ID %s", commentData.UserID, issueId)
+	commentsList := []*CommentsRequest{commentData}
+	commentAVs, err := dynamodbattribute.MarshalList(commentsList)
+	if err != nil {
+		fmt.Printf("Could not Marshal comments list %s", err.Error())
+		return err
+	}
+	input := &dynamodb.UpdateItemInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":c": {
+				L: commentAVs,
+			},
+			":empty_list": {
+				L: []*dynamodb.AttributeValue{},
+			},
+		},
+		TableName: aws.String(IssuesTable),
+		Key: map[string]*dynamodb.AttributeValue{
+			"Id": {
+				S: aws.String(issueId),
+			},
+		},
+		ReturnValues:     aws.String("ALL_NEW"),
+		UpdateExpression: aws.String("SET Comments = list_append(if_not_exists(Comments, :empty_list),:c)"),
+	}
+	_, err = db.UpdateItem(input)
+	return err
+}
+
+func updateStatusForIssue(issueId string, statusData *StatusRequest) error {
+	fmt.Printf("Status changed to %s for issue ID %s", statusData.StatusMsg, issueId)
+	input := &dynamodb.UpdateItemInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":s": {
+				S: aws.String(statusData.StatusMsg),
+			},
+		},
+		TableName: aws.String(IssuesTable),
+		Key: map[string]*dynamodb.AttributeValue{
+			"Id": {
+				S: aws.String(issueId),
+			},
+		},
+		ReturnValues:     aws.String("UPDATED_NEW"),
+		UpdateExpression: aws.String("set Status = :s"),
+	}
+
+	_, err := db.UpdateItem(input)
+	return err
+
+}
+
+func updateHelpersForIssue(issueId string, helpersData *HelpersRequest) error {
+	fmt.Printf("User %s is providing help for issue ID %s", helpersData.UserID, issueId)
+	helperIDList := []string{helpersData.UserID}
+	helperAVs, err := dynamodbattribute.MarshalList(helperIDList)
+	if err != nil {
+		fmt.Printf("Could not Marshal user ids list %s", err.Error())
+		return err
+	}
+	input := &dynamodb.UpdateItemInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":h": {
+				L: helperAVs,
+			},
+			":empty_list": {
+				L: []*dynamodb.AttributeValue{},
+			},
+		},
+		TableName: aws.String(IssuesTable),
+		Key: map[string]*dynamodb.AttributeValue{
+			"Id": {
+				S: aws.String(issueId),
+			},
+		},
+		ReturnValues:     aws.String("ALL_NEW"),
+		UpdateExpression: aws.String("SET Helpers = list_append(if_not_exists(Helpers, :empty_list),:h)"),
+	}
+	_, err = db.UpdateItem(input)
+	return err
+}
+
 func getIssueById(issueID string) (*Issue, error) {
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
@@ -113,12 +197,6 @@ func putItem(issue *Issue) error {
 			},
 			"Personal": {
 				N: aws.String(strconv.Itoa(issue.Personal)),
-			},
-			"Helpers": {
-				SS: aws.StringSlice(issue.Helpers),
-			},
-			"Discussion": {
-				SS: aws.StringSlice(issue.Discussion),
 			},
 			"Status": {
 				S: aws.String(issue.Status),

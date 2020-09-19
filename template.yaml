@@ -14,7 +14,7 @@ Parameters:
     Default: AWS_SAM_LOCAL
   DBSERVER:
     Type: String
-    Default: 'http://host.docker.internal:8000'
+    Default: 'http://192.168.99.100:8000'
   USERTABLE:
     Type: String
     AllowedValues:
@@ -64,11 +64,16 @@ Resources:
       Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
       Events:
         Dummy1:
+          Type: Api
+          Properties:
+            Path: /issues/{issueId}/{field}
+            Method: ANY
+        Dummy2:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /issues/{issueId}
             Method: ANY
-        Dummy2:
+        Dummy3:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /issues
