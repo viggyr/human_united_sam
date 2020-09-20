@@ -13,18 +13,24 @@ import (
 	"github.com/google/uuid"
 )
 
+type Issue struct {
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	StatusMsg string `json:"statusmsg"`
+}
+
 type User struct {
-	ID                string   `json:"id"`
-	Name              string   `json:"name"`
-	Email             string   `json:"email"`
-	ProfileImageUrl   string   `json:"profileimageurl"`
-	JoinedDate        string   `json:"joineddate"`
-	LastLogin         string   `json:"lastlogin"`
-	SamaritanPoints   int      `json:"samaritanpoints"`
-	UserIssues        []string `json:"userissues"`
-	UserHelps         []string `json:"userhelps"`
-	UserInterests     []string `json:userinterests`
-	UsersCurrentHelps []string `json:usercurrenthelps`
+	ID              string   `json:"id"`
+	Name            string   `json:"name"`
+	Email           string   `json:"email"`
+	ProfileImageUrl string   `json:"profileimageurl"`
+	JoinedDate      string   `json:"joineddate"`
+	LastLogin       string   `json:"lastlogin"`
+	SamaritanPoints int      `json:"samaritanpoints"`
+	UserIssues      []*Issue `json:"userissues"`
+	UserHelps       []*Issue `json:"userhelps"`
+	//UserInterests     []Issue `json:userinterests`
+	//UsersCurrentHelps []Issue `json:usercurrenthelps`
 }
 
 type Post struct {
@@ -104,6 +110,13 @@ func fetch(request events.APIGatewayProxyRequest, userId string) (events.APIGate
 			Headers:    getHeaders(),
 			Body:       err.Error()}, nil
 	}
+
+	// one filter call to get issues created by user
+	userIssues, err := getIssuesCreatedByUser(userId)
+	// one filter call to get issues helped by user
+	helpedIssues, err := getIssuesHelpedByUser(userId, userInfo.Name)
+	userInfo.UserIssues = userIssues
+	userInfo.UserHelps = helpedIssues
 	user_json, err := json.Marshal(userInfo)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
@@ -133,7 +146,7 @@ func insert(request events.APIGatewayProxyRequest, userId string) (events.APIGat
 			Headers: getHeaders(),
 			Body:    http.StatusText(http.StatusBadRequest)}, nil
 	}
-	err = updateUser(userId, userRequest)
+	//err = updateUser(userId, userRequest)
 	if err != nil {
 
 		return events.APIGatewayProxyResponse{

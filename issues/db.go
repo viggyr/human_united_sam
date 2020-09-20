@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -110,19 +111,10 @@ func updateStatusForIssue(issueId string, statusData *StatusRequest) error {
 
 func updateHelpersForIssue(issueId string, helpersData *HelpersRequest) error {
 	fmt.Printf("User %s is providing help for issue ID %s", helpersData.UserName, issueId)
-	helperNameList := []string{helpersData.UserName}
-	helperAVs, err := dynamodbattribute.MarshalList(helperNameList)
-	if err != nil {
-		fmt.Printf("Could not Marshal user ids list %s", err.Error())
-		return err
-	}
 	input := &dynamodb.UpdateItemInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":h": {
-				L: helperAVs,
-			},
-			":empty_list": {
-				L: []*dynamodb.AttributeValue{},
+				S: aws.String(helpersData.UserName),
 			},
 		},
 		TableName: aws.String(IssuesTable),
@@ -131,10 +123,35 @@ func updateHelpersForIssue(issueId string, helpersData *HelpersRequest) error {
 				S: aws.String(issueId),
 			},
 		},
-		ReturnValues:     aws.String("ALL_NEW"),
-		UpdateExpression: aws.String("SET Helpers = list_append(if_not_exists(Helpers, :empty_list),:h)"),
+		ExpressionAttributeNames: map[string]*string{
+			"#i": aws.String(helpersData.UserID),
+		},
+		ConditionExpression: aws.String("attribute_exists(Helpers) and attribute_not_exists(Helpers.#i)"),
+		ReturnValues:        aws.String("ALL_NEW"),
+		UpdateExpression:    aws.String("set Helpers.#i = :h"),
 	}
-	_, err = db.UpdateItem(input)
+	_, err := db.UpdateItem(input)
+
+	if err != nil && strings.Contains(err.Error(), "The conditional request failed") {
+		// just a workaround for map not exists.
+		helperAVs, _ := dynamodbattribute.MarshalMap(map[string]string{helpersData.UserID: helpersData.UserName})
+		input = &dynamodb.UpdateItemInput{
+			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+				":h": {
+					M: helperAVs,
+				},
+			},
+			TableName: aws.String(IssuesTable),
+			Key: map[string]*dynamodb.AttributeValue{
+				"Id": {
+					S: aws.String(issueId),
+				},
+			},
+			ReturnValues:     aws.String("ALL_NEW"),
+			UpdateExpression: aws.String("set Helpers = :h"),
+		}
+		_, err = db.UpdateItem(input)
+	}
 	return err
 }
 

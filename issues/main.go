@@ -18,6 +18,11 @@ type CommentsRequest struct {
 	Comment  string `json:"comment"`
 }
 
+type HelpersRequest struct {
+	UserID   string `json:"userid"`
+	UserName string `json:"username"`
+}
+
 type Issue struct {
 	ID        string            `json:"id"`
 	Created   string            `json:"created"`
@@ -28,13 +33,9 @@ type Issue struct {
 	UserName  string            `json:"username"`
 	Location  string            `json:"location"`
 	Personal  int               `json:"personal"`
-	Helpers   []string          `json:"helpers"`
+	Helpers   map[string]string `json:"helpers"`
 	Comments  []CommentsRequest `json:comments`
 	StatusMsg string            `json:"statusmsg"`
-}
-
-type HelpersRequest struct {
-	UserName string `json:"username"`
 }
 
 type StatusRequest struct {
@@ -175,7 +176,7 @@ func update(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 			return events.APIGatewayProxyResponse{
 				StatusCode: http.StatusInternalServerError,
 				Headers:    getHeaders(),
-				Body:       "Failed to update helpers for issue"}, nil
+				Body:       err.Error()}, nil
 		}
 	case "status":
 		statusReq := new(StatusRequest)

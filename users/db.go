@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -16,6 +15,7 @@ var db *dynamodb.DynamoDB
 //const usersTable = "huManUnited-UsersTable-16HJ59LOVEINZ"
 var usersTable = "users"
 var postsTable = "posts"
+var issuesTable = "issues"
 
 func createDBConnection(env string, endpoint string) {
 	if env == "AWS_SAM_LOCAL" {
@@ -146,6 +146,7 @@ func getAllPosts() ([]*Post, error) {
 	return posts, nil
 }
 
+/*
 func deleteIssueForUser(userID string, issueID string) error {
 	return nil
 }
@@ -285,6 +286,81 @@ func updateUser(userId string, userReq *UserRequest) error {
 	default:
 		return nil
 	}
+}
+*/
+func getIssuesCreatedByUser(userId string) ([]*Issue, error) {
+	// get userid and filter by userid
+	// return issue data with projection
+	filt := expression.Name("UserID").Equal(expression.Value(userId))
+	proj := expression.NamesList(expression.Name("Id"), expression.Name("Title"), expression.Name("StatusMsg"))
+	expr, err := expression.NewBuilder().WithProjection(proj).WithFilter(filt).Build()
+	if err != nil {
+		fmt.Println("Failed to build filter by email expression ")
+		fmt.Println(err.Error())
+	}
+	input := &dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 aws.String(issuesTable),
+	}
+	result, err := db.Scan(input)
+	if err != nil {
+		return nil, err
+	}
+	if len(result.Items) == 0 {
+		return nil, nil
+	}
+	issues := make([]*Issue, 0)
+	for _, i := range result.Items {
+		issue := new(Issue)
+		err = dynamodbattribute.UnmarshalMap(i, &issue)
+		if err != nil {
+			return nil, err
+		}
+		issues = append(issues, issue)
+	}
+	return issues, nil
+}
+
+func getIssuesHelpedByUser(userId string, userName string) ([]*Issue, error) {
+	// get userid and username
+	//  return issue data with projection
+
+	//userData := map[string]string{"UserID": userId, "UserName": userName}
+	filt := expression.Name("Helpers." + userId).Contains(userName)
+	proj := expression.NamesList(expression.Name("Id"), expression.Name("Title"), expression.Name("StatusMsg"))
+	expr, err := expression.NewBuilder().WithProjection(proj).WithFilter(filt).Build()
+	if err != nil {
+		fmt.Println("Failed to build filter by email expression ")
+		fmt.Println(err.Error())
+	}
+	input := &dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 aws.String(issuesTable),
+	}
+	result, err := db.Scan(input)
+	if err != nil {
+		return nil, err
+	}
+	if len(result.Items) == 0 {
+		return nil, nil
+	}
+	issues := make([]*Issue, 0)
+	for _, i := range result.Items {
+		issue := new(Issue)
+		err = dynamodbattribute.UnmarshalMap(i, &issue)
+		if err != nil {
+			return nil, err
+		}
+		issues = append(issues, issue)
+	}
+	return issues, nil
+	return nil, nil
 }
 
 func getUserById(userId string) (*User, error) {
