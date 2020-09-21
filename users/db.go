@@ -146,148 +146,6 @@ func getAllPosts() ([]*Post, error) {
 	return posts, nil
 }
 
-/*
-func deleteIssueForUser(userID string, issueID string) error {
-	return nil
-}
-func deleteHelpForUser(userID string, issueID string) error {
-	return nil
-}
-func deleteInterestForUser(userID string, issueID string) error {
-	return nil
-}
-
-func deleteListItemForUser(userID string, issueID string, scenario string) error {
-	switch scenario {
-	case "issue":
-		return deleteIssueForUser(userID, issueID)
-	case "help":
-		return deleteHelpForUser(userID, issueID)
-	case "interest":
-		return deleteInterestForUser(userID, issueID)
-	default:
-		return errors.New("Invalid Scenario")
-	}
-}
-
-func addIssueForUser(userId string, issueId string) error {
-	fmt.Printf("User %s has posted issue with issue ID %s", userId, issueId)
-	issueIDList := []string{issueId}
-	issueAVs, err := dynamodbattribute.MarshalList(issueIDList)
-	if err != nil {
-		fmt.Printf("Could not Marshal issue id list %s", err.Error())
-		return err
-	}
-
-	input := &dynamodb.UpdateItemInput{
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":i": {
-				L: issueAVs,
-			},
-			":empty_list": {
-				L: []*dynamodb.AttributeValue{},
-			},
-		},
-		TableName: aws.String(usersTable),
-		Key: map[string]*dynamodb.AttributeValue{
-			"Id": {
-				S: aws.String(userId),
-			},
-		},
-		ReturnValues:     aws.String("ALL_NEW"),
-		UpdateExpression: aws.String("SET UserIssues = list_append(if_not_exists(UserIssues, :empty_list),:i)"),
-	}
-	_, err = db.UpdateItem(input)
-	return err
-}
-
-func addHelpForUser(userId string, issueId string) error {
-	fmt.Printf("User %s is providing help for issue ID %s", userId, issueId)
-	issueIDList := []string{issueId}
-	issueAVs, err := dynamodbattribute.MarshalList(issueIDList)
-	if err != nil {
-		fmt.Printf("Could not Marshal issue id list %s", err.Error())
-		return err
-	}
-	input := &dynamodb.UpdateItemInput{
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":i": {
-				L: issueAVs,
-			},
-			":empty_list": {
-				L: []*dynamodb.AttributeValue{},
-			},
-			":s": {
-				N: aws.String("5"),
-			},
-		},
-		TableName: aws.String(usersTable),
-		Key: map[string]*dynamodb.AttributeValue{
-			"Id": {
-				S: aws.String(userId),
-			},
-		},
-		ReturnValues:     aws.String("ALL_NEW"),
-		UpdateExpression: aws.String("SET UserHelps = list_append(if_not_exists(UserHelps, :empty_list),:i), SamaritanPoints = SamaritanPoints + :s"),
-	}
-	_, err = db.UpdateItem(input)
-	return err
-}
-
-func addInterestForUser(userId string, issueId string) error {
-	fmt.Printf("User %s interested in issue ID %s", userId, issueId)
-	issueIDList := []string{issueId}
-	issueAVs, err := dynamodbattribute.MarshalList(issueIDList)
-	if err != nil {
-		fmt.Printf("Could not Marshal issue id list %s", err.Error())
-		return err
-	}
-	input := &dynamodb.UpdateItemInput{
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":i": {
-				L: issueAVs,
-			},
-			":empty_list": {
-				L: []*dynamodb.AttributeValue{},
-			},
-		},
-		TableName: aws.String(usersTable),
-		Key: map[string]*dynamodb.AttributeValue{
-			"Id": {
-				S: aws.String(userId),
-			},
-		},
-		ReturnValues:     aws.String("ALL_NEW"),
-		UpdateExpression: aws.String("SET UserInterests = list_append(if_not_exists(UserInterests, :empty_list),:i)"),
-	}
-	_, err = db.UpdateItem(input)
-	return err
-}
-
-func addListItemForUser(userID string, issueID string, scenario string) error {
-	switch scenario {
-	case "issue":
-		return addIssueForUser(userID, issueID)
-	case "help":
-		return addHelpForUser(userID, issueID)
-	case "interest":
-		return addInterestForUser(userID, issueID)
-	default:
-		return errors.New("Invalid Scenario passed!!")
-	}
-}
-
-func updateUser(userId string, userReq *UserRequest) error {
-	switch userReq.Action {
-	case "DELETE":
-		return deleteListItemForUser(userId, userReq.IssueID, userReq.Scenario)
-	case "ADD":
-		return addListItemForUser(userId, userReq.IssueID, userReq.Scenario)
-	default:
-		return nil
-	}
-}
-*/
 func getIssuesCreatedByUser(userId string) ([]*Issue, error) {
 	// get userid and filter by userid
 	// return issue data with projection
@@ -295,7 +153,7 @@ func getIssuesCreatedByUser(userId string) ([]*Issue, error) {
 	proj := expression.NamesList(expression.Name("Id"), expression.Name("Title"), expression.Name("StatusMsg"))
 	expr, err := expression.NewBuilder().WithProjection(proj).WithFilter(filt).Build()
 	if err != nil {
-		fmt.Println("Failed to build filter by email expression ")
+		fmt.Println("Failed to build filter by userId expression ")
 		fmt.Println(err.Error())
 	}
 	input := &dynamodb.ScanInput{
@@ -325,15 +183,13 @@ func getIssuesCreatedByUser(userId string) ([]*Issue, error) {
 }
 
 func getIssuesHelpedByUser(userId string, userName string) ([]*Issue, error) {
-	// get userid and username
+	// check for userid and username in issues table
 	//  return issue data with projection
-
-	//userData := map[string]string{"UserID": userId, "UserName": userName}
 	filt := expression.Name("Helpers." + userId).Contains(userName)
 	proj := expression.NamesList(expression.Name("Id"), expression.Name("Title"), expression.Name("StatusMsg"))
 	expr, err := expression.NewBuilder().WithProjection(proj).WithFilter(filt).Build()
 	if err != nil {
-		fmt.Println("Failed to build filter by email expression ")
+		fmt.Println("Failed to build filter by Helpers expression ")
 		fmt.Println(err.Error())
 	}
 	input := &dynamodb.ScanInput{
